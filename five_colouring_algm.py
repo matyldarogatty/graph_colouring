@@ -25,7 +25,6 @@ class Colour5:
         print(self.L)
         print(self.DEG)
 
-
     def check(self, w):    #gdy zmienia się stopień - element zmienia kolejkę
         if self.DEG[w] == 5:
             self.Q5.append(w)
@@ -83,7 +82,7 @@ class Colour5:
             else:
                 v = self.Q5.pop(0)
                 print("reduce2")
-                m=False
+                m = False
                 for x in self.G.neighbors(v):
                     for y in self.G.neighbors(v):
                         if not (x == y or y in self.G.neighbors(x)) and self.DEG[x] < self.k and self.DEG[y] < self.k: #jeśli 2 niepołączone sąsiady v mają stopnie < k=6
