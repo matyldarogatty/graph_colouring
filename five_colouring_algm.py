@@ -1,54 +1,52 @@
-from queue_lists.stack_ll import StackLL
 import networkx as nx
-import queue as q
+import queue as q   #nie ma usuwania konkretnego elementu
+import collections
+import matplotlib.pyplot as plt
 
 
 class Colour5:
-    def __init__(self, graph):
+    def __init__(self, graph, start_from=None):
         self.G = graph
-        self.k = 6  # istnieje węzeł stopnia < 6
+        self.ident, self.blocked = set(), set()
+        self.k = 13
         self.n = graph.number_of_nodes()
-        self.S = StackLL()
-        self.MARK, self.DEG, self.L = [], [], []
-        self.Q4, self.Q5 = [], []
-        for node in sorted(graph):
-            v = node
-            print(v)
-            self.L.append(list(graph.neighbors(v)))  # L - lista połączeń (lista list)
-            deg = graph.degree(v)
-            self.DEG.append(deg)  # DEG - lista stopni wierzchołków
-            if deg <= 4:
+        self.S = []
+        self.L = [list(graph.neighbors(v)) for v in sorted(graph)]
+        self.DEG = [graph.degree(v) for v in sorted(graph)]
+        self.MARK = [False] * graph.number_of_nodes()
+        self.Q4, self.Q5 = collections.deque(), collections.deque()
+        # start z konkretnego węzła
+        g = sorted(graph)
+        if start_from:
+            g.remove(start_from)
+            g.insert(0, start_from)
+        for v in g:
+            if graph.degree(v) <= 4:
                 self.Q4.append(v)
-            elif deg == 5:
+            elif graph.degree(v) == 5:
                 self.Q5.append(v)
-            self.MARK.append(False)
-        print(self.L)
-        print(self.DEG)
 
     def check(self, w):    #gdy zmienia się stopień - element zmienia kolejkę
         if self.DEG[w] == 5:
             self.Q5.append(w)
         elif self.DEG[w] == 4:
-            self.Q5.remove(w)   #przenies w z Q5 do Q4 (v=w)
+            self.Q5.remove(w)   #przenies w z Q5 do Q4
             self.Q4.append(w)
 
     def delete(self, v):  #delete(Q4.get(), n)
         pointer = self.L[v][:]
         for w in self.L[v]:  #dla każdego sąsiada v: usuń v z N(w), zmniejsz stopień w
-            Lw = self.L[w]
-            print("delete", w, v, Lw, self.n, self.S)
-            Lw.remove(v) #v not in L[w]
+            self.L[w].remove(v) #v not in L[w]
             self.DEG[w] -= 1
-
             self.check(w)
-        self.S.push((v, pointer))
+        self.S.append((v, pointer))
         self.n -= 1
 
     def identify(self, u, v):
-        for w in self.L[v]: #type(w) = int
+        self.ident.add((u, v))
+        for w in self.L[v]:
             self.MARK[w] = True
         for w in self.L[u]:
-            print("Delete", w, u, self.n, self.S)
             self.L[w].remove(u)    #dla każdego sąsiada u - usuń u z jego sąsiadów
             if not self.MARK[w]:  # w sasiaduje z u i nie sasiaduje z v
                 self.L[v].append(w)  #połącz je
@@ -68,24 +66,19 @@ class Colour5:
             self.Q5.remove(u)
         elif u in self.Q4:
             self.Q4.remove(u)
-        self.S.push((u,v))
+        self.S.append((u, v))
         self.n -= 1
-        print("identify")
 
     def reduce(self):
-        print("reduce1")
         while self.n > 5:
             if self.Q4:
-                print("reduce3")
-                self.delete(self.Q4.pop(0))
-                continue
+                self.delete(self.Q4.popleft())
             else:
-                v = self.Q5.pop(0)
-                print("reduce2")
+                v = self.Q5.popleft()
                 m = False
-                for x in self.G.neighbors(v):
-                    for y in self.G.neighbors(v):
-                        if not (x == y or y in self.G.neighbors(x)) and self.DEG[x] < self.k and self.DEG[y] < self.k: #jeśli 2 niepołączone sąsiady v mają stopnie < k=6
+                for x in self.L[v]:
+                    for y in self.L[v]:
+                        if not (x == y or y in self.L[x]) and self.DEG[x] < self.k and self.DEG[y] < self.k: #jeśli 2 niepołączone sąsiady v mają stopnie < k=6
                             m = True
                             self.delete(v)
                             self.identify(x, y)
@@ -93,31 +86,35 @@ class Colour5:
                     if m:
                         break
                 if not m:
+                    self.blocked.add(v)
                     self.Q5.append(v)  #'blocked vertex' wraca na konieć Q5
-                print("reduce4")
 
     def colour(self):
-        print("colour")
         result = {}
-        l = ["red", "blue", "yellow", "green", "orange"]
+        l = {"red", "blue", "yellow", "green", "orange"}
         for _ in range(len(self.Q4)):
-            v = self.Q4.pop(0)
+            v = self.Q4.popleft()
             result[v] = l.pop()
-            #v["colour"] = l.pop()
-            #result.append(v)
-        while not self.S.is_empty():
-            (x,y) = self.S.pop()
-            l = {"red", "blue", "yellow", "green", "orange"}
-            if isinstance(y,list):  #jeśli y to lista (wskaźnik do L) => pokoloruj x innym kolorem niż węzły z y
+        l = {"red", "blue", "yellow", "green", "orange"}
+        while self.S:
+            x, y = self.S.pop()
+            if isinstance(y, list):  #jeśli y to lista (wskaźnik do L) => pokoloruj x innym kolorem niż węzły z y
                 result[x] = (l - {result[u] for u in y}).pop()
             else:
-                result[x] = result[y]
-            #x["colour"] = y["colour"] #jeśli y to węzeł, z którym x był zidentyfikowany => pokoloruj na ten sam kolor co węzeł y
+                result[x] = result[y]  #jeśli y to węzeł, z którym x był zidentyfikowany => pokoloruj na ten sam kolor co węzeł y
         return result
 
     def start(self):
         self.reduce()
+        print("identifications:", self.ident)
+        print("blocked vertixes:", self.blocked)
         return self.colour()
+
+    def draw_colouring(self):
+        result = self.start()
+        col_map = [result[x] for x in self.G]
+        nx.draw_planar(self.G, node_color=col_map, with_labels=True)  # , pos=nx.spring_layout(graph)
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -136,13 +133,9 @@ if __name__ == "__main__":
     g.add_edge(5, 4)
     g.add_edge(5, 2)
     #col = Colour5(g)
-
     I = nx.icosahedral_graph()
+    print(nx.is_planar(I))
     col = Colour5(I)
-    result = col.start()
-    print(result)
-    import matplotlib.pyplot as plt
-    col_map = [result[x] for x in I]
-    print(col_map)
-    nx.draw_planar(I, node_color=col_map, with_labels=True)  # , pos=nx.spring_layout(graph)
-    plt.show()
+    col.draw_colouring()
+
+
