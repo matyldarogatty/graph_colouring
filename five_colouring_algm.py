@@ -1,5 +1,5 @@
 import networkx as nx
-import queue as q   #nie ma usuwania konkretnego elementu
+import queue as q
 import collections
 import matplotlib.pyplot as plt
 
