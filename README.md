@@ -13,7 +13,8 @@ The algorithm: five_colouring_algm.py.
 Some test on graphs consist of vertices of degree more than 4: icosahedral.py.
 
 #### Przykład 1. Dudziestościan.
-![t11](https://user-images.githubusercontent.com/92950276/217048247-1757b343-717b-4c34-ace6-8a5e20a44cf6.png | width=10)
+<img src="https://user-images.githubusercontent.com/92950276/217048247-1757b343-717b-4c34-ace6-8a5e20a44cf6.png" width="10" height="10">
+![t11]( | width=10)
 ![t12](https://user-images.githubusercontent.com/92950276/217048261-13f19c77-f246-4327-b7b1-731b3d3a19b1.png | width=10)
 
 #### Przykład 2. Graf z doklejonymi dwudziestościanami.
